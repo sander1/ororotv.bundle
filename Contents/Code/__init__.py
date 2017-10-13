@@ -50,7 +50,7 @@ def Channel(url, title):
 
 		yt_id = video.xpath('.//a/@href')[0].strip('#')
 		title = video.xpath('.//div[@class="name"]/text()')[0]
-		thumb = video.xpath('.//img/@src')[0]
+		thumb = video.xpath('.//img/@data-original')[0]
 
 		oc.add(VideoClipObject(
 			url = YT_URL % (yt_id),
