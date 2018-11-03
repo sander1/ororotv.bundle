@@ -1,3 +1,5 @@
+import ssl, urllib2
+
 NAME = 'ORORO.TV'
 ICON = 'icon-default.png'
 ART = 'art-default.jpg'
@@ -8,19 +10,21 @@ YT_URL = 'https://www.youtube.com/watch?v=%s'
 
 RE_CHANNELS_JSON = Regex('"items":(\[.+?\])\};')
 
+HTTP_HEADERS = {
+	"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
+}
+
 ####################################################################################################
 def Start():
 
 	ObjectContainer.title1 = NAME
-	HTTP.CacheTime = CACHE_1HOUR
-	HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36'
 
 ####################################################################################################
 @handler('/video/ororotv', NAME, art=ART, thumb=ICON)
 def MainMenu():
 
 	oc = ObjectContainer()
-	page = HTTP.Request(CHANNELS_URL).content
+	page = GetData(CHANNELS_URL)
 	json = RE_CHANNELS_JSON.search(page).group(1)
 	json_obj = JSON.ObjectFromString(json)
 
@@ -40,7 +44,8 @@ def MainMenu():
 def Channel(url, title):
 
 	oc = ObjectContainer(title2=title)
-	html = HTML.ElementFromURL('%s%s' % (BASE_URL, url))
+	page = GetData('%s%s' % (BASE_URL, url))
+	html = HTML.ElementFromString(page)
 
 	videos = html.xpath('//a[@class="js-episode"]')
 
@@ -57,3 +62,16 @@ def Channel(url, title):
 		))
 
 	return oc
+
+####################################################################################################
+@route('/video/ororotv/getdata')
+def GetData(url):
+
+	# Quick and dirty workaround
+	# Do not validate ssl certificate
+	# http://stackoverflow.com/questions/27835619/ssl-certificate-verify-failed-error
+	req = urllib2.Request(url, headers=HTTP_HEADERS)
+	ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+	data = urllib2.urlopen(req, context=ssl_context).read()
+
+	return data
